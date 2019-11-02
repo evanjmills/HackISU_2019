@@ -4,6 +4,7 @@ import random
 import math
 import neat
 import os
+import numpy as np
 
 pygame.init()
 pygame.font.init()
@@ -20,6 +21,9 @@ FPS = 30
 
 gen = 0
 max = 0
+cur_gen_best = 0
+cur_gen_fitness = 0
+max_fitness = 0
 score = 0
 
 playerColor = (255, 255, 255)
@@ -31,7 +35,7 @@ BLACK = (0, 0, 0)
 
 enemy_dead = False
 enemyRadius = 10
-number_of_enemies = 5
+number_of_enemies = 3
 enemies_on_screen = 0
 enemy_look_angle = 0
 enemy_list = []
@@ -59,20 +63,42 @@ slopes = [(1, 0), (root_two / 2, root_two / 2), (0, 1), (-1 * root_two, root_two
     #     if keys[pygame.K_RIGHT] and playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5:
     #         playerPos[0] += 5
 def move(output, genome):
+    add = 0
     if output[0] >= .5 and playerPos[1] > playerRadius + fullWindowBoarder-4:
         playerPos[1] -= 5
+        add += 1
     if output[1] >= .5 and playerPos[0] > (fullWindowBoarder + playerRadius)-4:
         playerPos[0] -= 5
+        add += 1
     if output[2] >= .5 and playerPos[1] < Window_Height - (fullWindowBoarder + playerRadius)+5:
         playerPos[1] += 5
+        add += 1
     if output[3] >= .5 and playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5:
         playerPos[0] += 5
+        add += 1
 
-    # if playerPos[0] >= Window_Width - (fullWindowBoarder + playerRadius)+5 or playerPos[1] >= Window_Height - (fullWindowBoarder + playerRadius)+5\
-    #     or playerPos[0] <= (fullWindowBoarder + playerRadius)-4 or playerPos[1] <= playerRadius + fullWindowBoarder-4:
-    #     genome.fitness -= 20
+        if add >= 3:
+            genome.fitness -= 1000
 
-    genome.fitness += 0.00000000001
+    neg = 0
+    if playerPos[0] >= Window_Width - (fullWindowBoarder + playerRadius)+5:
+        genome.fitness -= 20
+        neg -= 20
+    if playerPos[1] >= Window_Height - (fullWindowBoarder + playerRadius)+5:
+        genome.fitness -= 20
+        neg -= 20
+    if playerPos[0] <= (fullWindowBoarder + playerRadius)-4:
+        genome.fitness -= 20
+        neg -= 20
+    if playerPos[1] <= playerRadius + fullWindowBoarder-4:
+        genome.fitness -= 20
+        neg -= 20
+
+    if neg <= -40:
+        genome.fitness -= 40
+
+
+    genome.fitness += 0.000001
 
 
 def attack(genome):
@@ -132,7 +158,7 @@ def reset():
     global enemyRadius
     enemyRadius = 10
     global number_of_enemies
-    number_of_enemies = 5
+    number_of_enemies = 3
     global enemies_on_screen
     enemies_on_screen = 0
     global enemy_look_angle
@@ -170,8 +196,8 @@ def vision():
     for x, temp2 in enumerate(tuples):
         try:
             if x < 5:
-                nodes[x * 2 + 10] = temp2[0]
-                nodes[x * 2 + 11] = temp2[1]
+                nodes[x * 2 + 6] = temp2[0]
+                nodes[x * 2 + 7] = temp2[1]
             else:
                 break
         except :
@@ -179,6 +205,11 @@ def vision():
             print(temp2)
             print(tuples)
             sys.exit()
+
+    nodes[16] = playerPos[0] > (fullWindowBoarder + playerRadius)-4
+    nodes[17] = playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5
+    nodes[18] = playerPos[1] > playerRadius + fullWindowBoarder-4
+    nodes[19] = playerPos[1] < Window_Height - (fullWindowBoarder + playerRadius)+5
 
     return nodes
 
@@ -194,7 +225,7 @@ def game(genome, net):
             score += 1
             text_surface = myfont.render("Score: " + str(score), False, (0, 0, 0))
         keys = pygame.key.get_pressed()
-        clock.tick(300)
+        clock.tick(400)
         while enemies_on_screen < number_of_enemies:
             spawn_enemy()
 
@@ -215,7 +246,7 @@ def game(genome, net):
         for projectile in projectileObjects:
             projectile.move()
             if player_hit_box.colliderect(projectile.projectile_hit_box):
-                genome.fitness -= 50
+                genome.fitness -= 30
                 cont = False
                 break
                 # sys.exit()
@@ -252,12 +283,21 @@ def game(genome, net):
 
         # move(keys, event, genome)
 
-    global max
-    global gen
+    genome.fitness += score * 20
+    global max, max_fitness, cur_gen_best, cur_gen_fitness, gen
+    if cur_gen_fitness < genome.fitness:
+        cur_gen_fitness = genome.fitness
+    if max_fitness < genome.fitness:
+        max_fitness = genome.fitness
+    if(cur_gen_best < score):
+        cur_gen_best = score
     if max < score:
         max = score
 
     print("Generation: " + str(gen))
+    print("Max Fitness: " + str(max_fitness))
+    print("Cur Score: " + str(score))
+    print("Gen Max Score: " + str(cur_gen_best))
     print("Max Score: " + str(max))
 
 
@@ -289,7 +329,7 @@ class Enemy:
         projectileObjects.append(bullet)
 
     def shoot_loop(self):
-        if self.trigger_count > self.shoot_trigger+random.randint(0, FPS*4):
+        if self.trigger_count > self.shoot_trigger+random.randint(FPS*4, FPS*30):
             self.shoot()
             self.trigger_count = 0
         else:
