@@ -40,11 +40,11 @@ feed_forward            = True
 initial_connection      = full
 
 # node add/remove rates
-node_add_prob           = 0.2
-node_delete_prob        = 0.2
+node_add_prob           = 0.4
+node_delete_prob        = 0.4
 
 # network parameters
-num_hidden              = 10
+num_hidden              = 40
 num_inputs              = 20
 num_outputs             = 5
 

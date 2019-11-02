@@ -7,6 +7,7 @@ import os
 
 pygame.init()
 pygame.font.init()
+pygame.display.set_caption("yeet")
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 text_surface = myfont.render('Score: 0', False, (0, 0, 0))
 
@@ -67,11 +68,11 @@ def move(output, genome):
     if output[3] >= .5 and playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5:
         playerPos[0] += 5
 
-    if playerPos[0] >= Window_Width - (fullWindowBoarder + playerRadius)+5 or playerPos[1] >= Window_Height - (fullWindowBoarder + playerRadius)+5\
-        or playerPos[0] <= (fullWindowBoarder + playerRadius)-4 or playerPos[1] <= playerRadius + fullWindowBoarder-4:
-        genome.fitness -= 0.2
+    # if playerPos[0] >= Window_Width - (fullWindowBoarder + playerRadius)+5 or playerPos[1] >= Window_Height - (fullWindowBoarder + playerRadius)+5\
+    #     or playerPos[0] <= (fullWindowBoarder + playerRadius)-4 or playerPos[1] <= playerRadius + fullWindowBoarder-4:
+    #     genome.fitness -= 20
 
-    genome.fitness += 0.1
+    genome.fitness += 0.00000000001
 
 
 def attack(genome):
@@ -89,7 +90,7 @@ def attack(genome):
             global enemies_on_screen
             enemies_on_screen -= 1
 
-            genome.fitness += 20
+            genome.fitness += 100
         count += 1
 
 
@@ -164,14 +165,20 @@ def vision():
     for projectile in projectileObjects:
         tuples.append((projectile.projectile_x_position, projectile.projectile_y_position))
 
-    tuples.sort(key=lambda temp: math.sqrt(temp[0] ** 2 + temp[1] ** 2))
+    tuples.sort(key=lambda temp: math.floor(math.sqrt(temp[0] ** 2 + temp[1] ** 2)))
 
-    for x, temp in tuples:
-        if x < 5:
-            nodes[x * 2 + 10] = temp[0]
-            nodes[x * 2 + 11] = temp[1]
-        else:
-            break
+    for x, temp2 in enumerate(tuples):
+        try:
+            if x < 5:
+                nodes[x * 2 + 10] = temp2[0]
+                nodes[x * 2 + 11] = temp2[1]
+            else:
+                break
+        except :
+            print(x)
+            print(temp2)
+            print(tuples)
+            sys.exit()
 
     return nodes
 
@@ -187,7 +194,7 @@ def game(genome, net):
             score += 1
             text_surface = myfont.render("Score: " + str(score), False, (0, 0, 0))
         keys = pygame.key.get_pressed()
-        clock.tick(90)
+        clock.tick(300)
         while enemies_on_screen < number_of_enemies:
             spawn_enemy()
 
@@ -208,7 +215,7 @@ def game(genome, net):
         for projectile in projectileObjects:
             projectile.move()
             if player_hit_box.colliderect(projectile.projectile_hit_box):
-                genome.fitness -= 10
+                genome.fitness -= 50
                 cont = False
                 break
                 # sys.exit()
@@ -290,7 +297,7 @@ class Enemy:
 
 
 class Projectile:
-    speed = 1
+    speed = 2
     projectile_hit_box = None
     projectile_x_position = 0
     projectile_y_position = 0
