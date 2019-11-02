@@ -25,8 +25,8 @@ RED = (255, 0, 0)
 BLACK = (0, 0, 0)
 
 enemy_dead = False
-enemyRadius = 20
-number_of_enemies = 1
+enemyRadius = 10
+number_of_enemies = 5
 enemies_on_screen = 0
 enemy_look_angle = 0
 enemy_list = []
@@ -34,7 +34,7 @@ enemy_hit_box_list = []
 
 player_dead = False
 playerPos = [Window_Width//2, Window_Height//2]
-playerRadius = 20
+playerRadius = 10
 fullWindowBoarder = 10
 
 
@@ -149,7 +149,7 @@ class Enemy:
         self.projectileObjects.append(bullet)
 
     def shoot_loop(self):
-        if self.trigger_count > self.shoot_trigger+random.randint(0, FPS*2):
+        if self.trigger_count > self.shoot_trigger+random.randint(0, FPS*4):
             self.shoot()
             self.trigger_count = 0
         else:
@@ -157,13 +157,13 @@ class Enemy:
 
 
 class Projectile:
-    speed = 5
+    speed = 1
     projectile_hit_box = None
     projectile_x_position = 0
     projectile_y_position = 0
     x_change = None
     y_change = None
-    bullet_size = 10
+    bullet_size = 5
 
     def __init__(self, x_distance_to_p, y_distance_to_p, given_projectile_x_position, given_projectile_y_position):
         self. projectile_x_position = given_projectile_x_position
@@ -171,6 +171,7 @@ class Projectile:
         distance = (math.sqrt(x_distance_to_p**2+y_distance_to_p**2))
         self.x_change = -(x_distance_to_p / distance)*self.speed
         self.y_change = -(y_distance_to_p / distance)*self.speed
+
 
     def move(self):
         self.projectile_x_position += self.x_change
