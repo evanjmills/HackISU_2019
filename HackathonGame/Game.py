@@ -1,9 +1,5 @@
 import pygame
 import sys
-import _thread
-import time
-import asyncio
-import threading
 import random
 import math
 
@@ -13,7 +9,7 @@ size = Window_Width, Window_Height = 640, 480
 fullWindow = pygame.display.set_mode(size)
 
 clock = pygame.time.Clock()
-FPS = 300
+FPS = 60
 
 playerColor = (255, 255, 255)
 enemy_color = (127, 0, 255)
@@ -28,7 +24,9 @@ number_of_enemies = 1
 enemies_on_screen = 0
 enemy_look_angle = 0
 enemy_list = []
+enemy_hit_box_list = []
 
+player_dead = False
 playerPos = [Window_Width//2, Window_Height//2]
 playerRadius = 20
 fullWindowBoarder = 10
@@ -37,47 +35,56 @@ fullWindowBoarder = 10
 def move(keys, event):
     if event.type == pygame.KEYDOWN or sum(keys) > 0:
         if keys[pygame.K_UP] and playerPos[1] > playerRadius + fullWindowBoarder-4:
-            playerPos[1] -= 1
+            playerPos[1] -= 5
         if keys[pygame.K_LEFT] and playerPos[0] > (fullWindowBoarder + playerRadius)-4:
-            playerPos[0] -= 1
+            playerPos[0] -= 5
         if keys[pygame.K_DOWN] and playerPos[1] < Window_Height - (fullWindowBoarder + playerRadius)+5:
-            playerPos[1] += 1
+            playerPos[1] += 5
         if keys[pygame.K_RIGHT] and playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5:
-            playerPos[0] += 1
+            playerPos[0] += 5
 
 
 def attack():
-    pygame.draw.circle(fullWindow, GREEN, (playerPos[0], playerPos[1]), playerRadius+10)
+    attack_box = pygame.draw.circle(fullWindow, GREEN, (playerPos[0], playerPos[1]), playerRadius+10)
     pygame.display.update()
-
-
-def defend():
-    pygame.draw.circle(fullWindow, RED, (playerPos[0], playerPos[1]), playerRadius+10)
-    pygame.display.update()
+    count = 0
+    for rect in enemy_hit_box_list:
+        if attack_box.colliderect(rect):
+            enemy_hit_box_list.remove(rect)
+            enemy_list.pop(count)
+            global enemies_on_screen
+            enemies_on_screen -= 1
+        count += 1
 
 
 def spawn_enemy():
     gunner = Enemy()
     gunner.create()
     enemy_list.append(gunner)
+    hit_box = pygame.Rect(gunner.enemy_x_position, gunner.enemy_y_position,gunner.enemy_x_position+enemyRadius*2, gunner.enemy_y_position+enemyRadius*2)
+    enemy_hit_box_list.append(hit_box)
     global enemies_on_screen
     enemies_on_screen += 1
 
 def draw_enemies():
     for enemy in enemy_list:
         pygame.draw.circle(fullWindow, enemy_color, (enemy.enemy_x_position, enemy.enemy_y_position), enemyRadius)
+        enemy.shoot_loop()
         for projectile in enemy.projectileObjects:
             projectile.move()
             if(projectile.projectile_x_position < 0 or projectile.projectile_x_position > Window_Width or projectile.projectile_y_position > Window_Height or projectile.projectile_x_position < 0):
                 enemy.projectileObjects.remove(projectile)
 
 
+def is_collided_with(self, object):
+    return self.colliderect(object)
+
+
 def game():
     while 1:
         keys = pygame.key.get_pressed()
-        clock.tick()
+        clock.tick(FPS)
         #print(clock.get_fps())
-        defending = True
         while enemies_on_screen < number_of_enemies:
             spawn_enemy()
         for event in pygame.event.get():
@@ -87,14 +94,9 @@ def game():
             if keys[pygame.K_x]:
                 attack()
         if event.type == pygame.KEYDOWN or sum(keys) > 0:
-            if keys[pygame.K_z]:
-                defend()
-                defending = False
-        if event.type == pygame.KEYDOWN or sum(keys) > 0:
             if keys[pygame.K_SPACE]:
                 enemy_list[0].shoot()
-        if defending:
-            move(keys, event)
+        move(keys, event)
 
         pygame.Surface.fill(fullWindow, GREY)
         #boarder
@@ -108,7 +110,8 @@ def game():
 
 
 class Enemy:
-    time_elapsed = 0
+    shoot_trigger = FPS
+    trigger_count = 0
     enemy_x_position = Window_Width//2
     enemy_y_position = Window_Height//2
     projectileObjects = []
@@ -132,10 +135,11 @@ class Enemy:
         self.projectileObjects.append(bullet)
 
     def shoot_loop(self):
-        if clock.get_time() > 10:
+        if self.trigger_count > self.shoot_trigger:
             self.shoot()
+            self.trigger_count = 0
         else:
-            self.time_elapsed += clock.get_time()
+            self.trigger_count += 1
 
 
 class Projectile:
@@ -150,13 +154,13 @@ class Projectile:
         self. projectile_x_position = given_projectile_x_position
         self.projectile_y_position = given_projectile_y_position
         self.speed = given_speed
-        distance = (math.sqrt(math.pow(x_distance_to_p, 2)+math.pow(x_distance_to_p, 2)))
-        self.x_change = -(x_distance_to_p / distance)
-        self.y_change = -(y_distance_to_p / distance)
+        distance = (math.sqrt(x_distance_to_p**2+y_distance_to_p**2))
+        self.x_change = -(x_distance_to_p / distance)*self.speed
+        self.y_change = -(y_distance_to_p / distance)*self.speed
 
     def move(self):
-        self.projectile_x_position += self.x_change*self.speed
-        self.projectile_y_position += self.y_change*self.speed
+        self.projectile_x_position += self.x_change
+        self.projectile_y_position += self.y_change
         pygame.draw.circle(fullWindow, (255, 255, 255), (math.floor(self.projectile_x_position), math.floor(self.projectile_y_position)), self.bullet_size)
         pygame.display.update()
 
