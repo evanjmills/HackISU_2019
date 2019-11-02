@@ -64,10 +64,22 @@ body {
 }
 
 .leaderboard {
+  padding: 1rem;
+  h2 {
+    text-align: center;
+    padding-bottom: 1rem;
+  }
   table {
+    // border: 1px solid black;
+    width: 100%;
+    padding: 0.5rem;
+
     thead {
+      font-weight: bold;
     }
-    tr {
+    td {
+      padding: 0.4rem;
+      border-bottom: 1px solid #111111;
     }
   }
 }
@@ -104,7 +116,8 @@ body {
         border: 1px solid #888;
         box-shadow: inset 0 1px 3px #888;
         border-radius: 5px;
-        font-size: 1.3rem;
+        font-size: 1rem;
+        padding: 0.25rem;
       }
     }
   }
