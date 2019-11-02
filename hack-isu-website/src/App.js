@@ -9,7 +9,9 @@ import { UserInput } from './components/UserInput';
 function App() {
   return (
     <div className='App'>
-      <h1>A New Way to Play</h1>
+      <h1 className='header'>
+        A <span>NEAT</span> Way to Play
+      </h1>
       <Video />
       <Descriptions />
       <Leaderboard />
