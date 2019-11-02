@@ -1,6 +1,7 @@
 import pygame
 import sys
 import _thread
+import threading
 import random
 import math
 
@@ -60,7 +61,7 @@ def spawn_enemy():
     enemy_list.append(gunner)
     global enemies_on_screen
     enemies_on_screen += 1
-
+    #gunner.shoot()
 
 def draw_enemies():
     for enemy in enemy_list:
@@ -70,9 +71,9 @@ def draw_enemies():
 def game():
     while 1:
         keys = pygame.key.get_pressed()
-        clock.tick(FPS)
+        clock.tick()
+        print(clock.get_fps())
         defending = True
-
         while enemies_on_screen < number_of_enemies:
             spawn_enemy()
         for event in pygame.event.get():
@@ -87,6 +88,7 @@ def game():
                 defending = False
         if defending:
             move(keys, event)
+
         pygame.Surface.fill(fullWindow, GREY)
         #boarder
         pygame.draw.rect(fullWindow, (255, 255, 255), (0, 0, Window_Width, Window_Height), fullWindowBoarder)
@@ -116,8 +118,10 @@ class Enemy:
         pygame.display.update()
 
     def shoot(self):
-        bullet = Projectile(fullWindow, enemy_look_angle)
-        _thread.start_new_thread(bullet.move())
+        bullet = Projectile(5, self.enemy_x_position-playerPos[0], self.enemy_y_position-playerPos[1], (self.enemy_x_position, self.enemy_y_position))
+        #_thread.start_new_thread(bullet.move())
+        t1 = threading.Thread(target=bullet.move())
+        t1.start()
 
     def enemy_loop(self):
         count = 0
@@ -129,35 +133,29 @@ class Enemy:
 
 class Projectile:
     speed = None
-    full_window = None
-    position = []
+    projectile_x_position = 0
+    projectile_y_position = 0
     x_change = None
     y_change = None
     bullet_size = 10
 
-    def __init__(self, given_full_window, given_speed, x_distance_to_p, y_distance_to_p, given_position):
-        global speed
-        global x_change
-        global y_change
-        global full_window
-        global position
-        position = given_position
-        full_window = given_full_window
-        speed = given_speed
+    def __init__(self, given_speed, x_distance_to_p, y_distance_to_p, given_position):
+        self.position = given_position
+        self.speed = given_speed
         angle = math.degrees(math.atan(y_distance_to_p / x_distance_to_p))
-        x_change = math.cos(angle)
-        y_change = math.sin(angle)
+        self.x_change = math.cos(angle)
+        self.y_change = math.sin(angle)
 
     def move(self):
         global bullet_size
         count = 0
         while 1:
             count += 1
-            position[0] += x_change
-            position[1] += y_change
-            pygame.draw.circle(full_window, (255, 255, 255), position, bullet_size)
+            self.projectile_x_position += self.x_change
+            self.projectile_y_position += self.y_change
+            pygame.draw.circle(fullWindow, (255, 255, 255), (math.floor(self.projectile_x_position), math.floor(self.projectile_y_position)), self.bullet_size)
             pygame.display.update()
-            if count > 5000:
+            if count > 500:
                 break;
 
 game()
