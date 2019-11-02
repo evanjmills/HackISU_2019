@@ -96,7 +96,7 @@ def is_collided_with(self, object):
 def game():
     while 1:
         keys = pygame.key.get_pressed()
-        clock.tick()
+        clock.tick(FPS)
         while enemies_on_screen < number_of_enemies:
             spawn_enemy()
         for event in pygame.event.get():
