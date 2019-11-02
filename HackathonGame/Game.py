@@ -4,12 +4,18 @@ import random
 import math
 
 pygame.init()
+pygame.font.init()
+myfont = pygame.font.SysFont('Comic Sans MS', 30)
+text_surface = myfont.render('Score: 0', False, (0, 0, 0))
+
 
 size = Window_Width, Window_Height = 640, 480
 fullWindow = pygame.display.set_mode(size)
 
 clock = pygame.time.Clock()
-FPS = 60
+FPS = 30
+
+score = 0
 
 playerColor = (255, 255, 255)
 enemy_color = (127, 0, 255)
@@ -50,6 +56,10 @@ def attack():
     count = 0
     for rect in enemy_hit_box_list:
         if attack_box.colliderect(rect):
+            global score
+            score += 1
+            global text_surface
+            text_surface = myfont.render("Score: "+str(score), False, (0, 0, 0))
             enemy_hit_box_list.remove(rect)
             enemy_list.pop(count)
             global enemies_on_screen
@@ -61,18 +71,21 @@ def spawn_enemy():
     gunner = Enemy()
     gunner.create()
     enemy_list.append(gunner)
-    hit_box = pygame.Rect(gunner.enemy_x_position, gunner.enemy_y_position,gunner.enemy_x_position+enemyRadius*2, gunner.enemy_y_position+enemyRadius*2)
+    hit_box = pygame.Rect(gunner.enemy_x_position - enemyRadius, gunner.enemy_y_position - enemyRadius,enemyRadius*2, enemyRadius*2)
     enemy_hit_box_list.append(hit_box)
     global enemies_on_screen
     enemies_on_screen += 1
 
-def draw_enemies():
+def draw_enemies(player_hit_box):
     for enemy in enemy_list:
         pygame.draw.circle(fullWindow, enemy_color, (enemy.enemy_x_position, enemy.enemy_y_position), enemyRadius)
         enemy.shoot_loop()
         for projectile in enemy.projectileObjects:
             projectile.move()
-            if(projectile.projectile_x_position < 0 or projectile.projectile_x_position > Window_Width or projectile.projectile_y_position > Window_Height or projectile.projectile_x_position < 0):
+            if player_hit_box.colliderect(projectile.projectile_hit_box):
+                sys.exit()
+            if(projectile.projectile_x_position < 0 or projectile.projectile_x_position > Window_Width or
+                    projectile.projectile_y_position > Window_Height or projectile.projectile_x_position < 0):
                 enemy.projectileObjects.remove(projectile)
 
 
@@ -83,8 +96,7 @@ def is_collided_with(self, object):
 def game():
     while 1:
         keys = pygame.key.get_pressed()
-        clock.tick(FPS)
-        #print(clock.get_fps())
+        clock.tick()
         while enemies_on_screen < number_of_enemies:
             spawn_enemy()
         for event in pygame.event.get():
@@ -102,9 +114,11 @@ def game():
         #boarder
         pygame.draw.rect(fullWindow, (255, 255, 255), (0, 0, Window_Width, Window_Height), fullWindowBoarder)
         #player
-        pygame.draw.circle(fullWindow, playerColor, (playerPos[0], playerPos[1]), playerRadius)
+        player_hit_box = pygame.draw.circle(fullWindow, playerColor, (playerPos[0], playerPos[1]), playerRadius)
+        #score
+        fullWindow.blit(text_surface, (fullWindowBoarder, fullWindowBoarder))
         #update moving stuffs
-        draw_enemies()
+        draw_enemies(player_hit_box)
         #update frame
         pygame.display.update()
 
@@ -131,11 +145,11 @@ class Enemy:
         pygame.display.update()
 
     def shoot(self):
-        bullet = Projectile(5, self.enemy_x_position - playerPos[0], self.enemy_y_position - playerPos[1], self.enemy_x_position, self.enemy_y_position)
+        bullet = Projectile(self.enemy_x_position - playerPos[0], self.enemy_y_position - playerPos[1], self.enemy_x_position, self.enemy_y_position)
         self.projectileObjects.append(bullet)
 
     def shoot_loop(self):
-        if self.trigger_count > self.shoot_trigger:
+        if self.trigger_count > self.shoot_trigger+random.randint(0, FPS*2):
             self.shoot()
             self.trigger_count = 0
         else:
@@ -143,17 +157,17 @@ class Enemy:
 
 
 class Projectile:
-    speed = None
+    speed = 5
+    projectile_hit_box = None
     projectile_x_position = 0
     projectile_y_position = 0
     x_change = None
     y_change = None
     bullet_size = 10
 
-    def __init__(self, given_speed, x_distance_to_p, y_distance_to_p, given_projectile_x_position, given_projectile_y_position):
+    def __init__(self, x_distance_to_p, y_distance_to_p, given_projectile_x_position, given_projectile_y_position):
         self. projectile_x_position = given_projectile_x_position
         self.projectile_y_position = given_projectile_y_position
-        self.speed = given_speed
         distance = (math.sqrt(x_distance_to_p**2+y_distance_to_p**2))
         self.x_change = -(x_distance_to_p / distance)*self.speed
         self.y_change = -(y_distance_to_p / distance)*self.speed
@@ -161,7 +175,7 @@ class Projectile:
     def move(self):
         self.projectile_x_position += self.x_change
         self.projectile_y_position += self.y_change
-        pygame.draw.circle(fullWindow, (255, 255, 255), (math.floor(self.projectile_x_position), math.floor(self.projectile_y_position)), self.bullet_size)
+        self.projectile_hit_box = pygame.draw.circle(fullWindow, (255, 255, 255), (math.floor(self.projectile_x_position), math.floor(self.projectile_y_position)), self.bullet_size)
         pygame.display.update()
 
 
