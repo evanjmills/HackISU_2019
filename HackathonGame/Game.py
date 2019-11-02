@@ -57,7 +57,7 @@ def attack():
     for rect in enemy_hit_box_list:
         if attack_box.colliderect(rect):
             global score
-            score += 1
+            score += 10
             global text_surface
             text_surface = myfont.render("Score: "+str(score), False, (0, 0, 0))
             enemy_hit_box_list.remove(rect)
@@ -94,7 +94,13 @@ def is_collided_with(self, object):
 
 
 def game():
+    counter = 0
     while 1:
+        if(counter % FPS == 0):
+            global score
+            global text_surface
+            score += 1
+            text_surface = myfont.render("Score: " + str(score), False, (0, 0, 0))
         keys = pygame.key.get_pressed()
         clock.tick(FPS)
         while enemies_on_screen < number_of_enemies:
@@ -108,8 +114,10 @@ def game():
         if event.type == pygame.KEYDOWN or sum(keys) > 0:
             if keys[pygame.K_SPACE]:
                 enemy_list[0].shoot()
-        move(keys, event)
 
+        counter += 1
+
+        move(keys, event)
         pygame.Surface.fill(fullWindow, GREY)
         #boarder
         pygame.draw.rect(fullWindow, (255, 255, 255), (0, 0, Window_Width, Window_Height), fullWindowBoarder)
@@ -124,7 +132,7 @@ def game():
 
 
 class Enemy:
-    shoot_trigger = FPS
+    shoot_trigger = int(FPS)
     trigger_count = 0
     enemy_x_position = Window_Width//2
     enemy_y_position = Window_Height//2
