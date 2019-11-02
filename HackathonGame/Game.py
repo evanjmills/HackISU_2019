@@ -35,6 +35,7 @@ enemies_on_screen = 0
 enemy_look_angle = 0
 enemy_list = []
 enemy_hit_box_list = []
+projectileObjects = []
 
 player_dead = False
 playerPos = [Window_Width//2, Window_Height//2]
@@ -57,13 +58,13 @@ slopes = [(1, 0), (root_two / 2, root_two / 2), (0, 1), (-1 * root_two, root_two
     #     if keys[pygame.K_RIGHT] and playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5:
     #         playerPos[0] += 5
 def move(output, genome):
-    if output[0] >= 0.5 and playerPos[1] > playerRadius + fullWindowBoarder-4:
+    if output[0] >= .5 and playerPos[1] > playerRadius + fullWindowBoarder-4:
         playerPos[1] -= 5
-    if output[1] >= 0.5 and playerPos[0] > (fullWindowBoarder + playerRadius)-4:
+    if output[1] >= .5 and playerPos[0] > (fullWindowBoarder + playerRadius)-4:
         playerPos[0] -= 5
-    if output[2] >= 0.5 and playerPos[1] < Window_Height - (fullWindowBoarder + playerRadius)+5:
+    if output[2] >= .5 and playerPos[1] < Window_Height - (fullWindowBoarder + playerRadius)+5:
         playerPos[1] += 5
-    if output[3] >= 0.5 and playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5:
+    if output[3] >= .5 and playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5:
         playerPos[0] += 5
 
     if playerPos[0] >= Window_Width - (fullWindowBoarder + playerRadius)+5 or playerPos[1] >= Window_Height - (fullWindowBoarder + playerRadius)+5\
@@ -136,13 +137,11 @@ def reset():
     global enemy_look_angle
     enemy_look_angle = 0
     global enemy_list
-
-    for enemy in enemy_list:
-        enemy.projectileObjects.clear()
-
     enemy_list.clear()
     global enemy_hit_box_list
     enemy_hit_box_list.clear()
+    global projectileObjects
+    projectileObjects.clear()
 
     global player_dead
     player_dead = False
@@ -155,42 +154,24 @@ def is_collided_with(self, object):
 
 
 def vision():
-    enemy = False
-    projectile = False
-    wall = False
-    for idx, slope in enumerate(slopes):
-        nodes = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
-        xslope = slope[0]
-        yslope = slope[1]
-        x = playerPos[0]
-        y = playerPos[1]
-        distance = 0
-        while not enemy and not projectile and not wall:
-            for enm in enemy_list:
-                if enm.enemy_x_position <= x and enm.enemy_x_position + 2*enemyRadius >= x and enm.enemy_y_position < y \
-                        and enm.enemy_y_position + 2*enemyRadius:
-                    enemy = True
-                    nodes[2*idx] = distance
-                    break
-                for proj in enm.projectileObjects:
-                    if(proj.projectile_x_position < x and proj.projectile_x_position + 2*proj.bullet_size and
-                            proj.projectile_y_position < y and proj.projectile_y_position + 2*proj.bullet_size):
-                        projectile = True
-                        nodes[2*idx + 1] = distance
-                        break
-                if projectile:
-                    break
-                if playerRadius + fullWindowBoarder - 4 >= y or Window_Height - (
-                        fullWindowBoarder + playerRadius) + 5 <= y or \
-                        (fullWindowBoarder + playerRadius) - 4 >= x or Window_Width - (
-                        fullWindowBoarder + playerRadius) + 5 <= x:
-                    wall = True
+    nodes = [0] * 20
+    tuples = []
 
-                distance += 1
-                x += xslope
-                y += yslope
+    for x, enemy in enumerate(enemy_list):
+        nodes[2*x] = enemy.enemy_x_position - playerPos[0]
+        nodes[2*x + 1] = enemy.enemy_y_position - playerPos[1]
 
+    for projectile in projectileObjects:
+        tuples.append((projectile.projectile_x_position, projectile.projectile_y_position))
 
+    tuples.sort(key=lambda temp: math.sqrt(temp[0] ** 2 + temp[1] ** 2))
+
+    for x, temp in tuples:
+        if x < 5:
+            nodes[x * 2 + 10] = temp[0]
+            nodes[x * 2 + 11] = temp[1]
+        else:
+            break
 
     return nodes
 
@@ -206,7 +187,7 @@ def game(genome, net):
             score += 1
             text_surface = myfont.render("Score: " + str(score), False, (0, 0, 0))
         keys = pygame.key.get_pressed()
-        clock.tick()
+        clock.tick(90)
         while enemies_on_screen < number_of_enemies:
             spawn_enemy()
 
@@ -221,22 +202,19 @@ def game(genome, net):
         # draw_enemies(player_hit_box, genome)
 
         for enemy in enemy_list:
-            stop = False
             pygame.draw.circle(fullWindow, enemy_color, (enemy.enemy_x_position, enemy.enemy_y_position), enemyRadius)
             enemy.shoot_loop()
-            for projectile in enemy.projectileObjects:
-                projectile.move()
-                if player_hit_box.colliderect(projectile.projectile_hit_box):
-                    genome.fitness -= 10
-                    stop = True
-                    cont = False
-                    break
-                    # sys.exit()
-                if (projectile.projectile_x_position < 0 or projectile.projectile_x_position > Window_Width or
-                        projectile.projectile_y_position > Window_Height or projectile.projectile_x_position < 0):
-                    enemy.projectileObjects.remove(projectile)
-            if stop:
+
+        for projectile in projectileObjects:
+            projectile.move()
+            if player_hit_box.colliderect(projectile.projectile_hit_box):
+                genome.fitness -= 10
+                cont = False
                 break
+                # sys.exit()
+            if (projectile.projectile_x_position < 0 or projectile.projectile_x_position > Window_Width or
+                    projectile.projectile_y_position > Window_Height or projectile.projectile_x_position < 0):
+                projectileObjects.remove(projectile)
 
         # update frame
         pygame.display.update()
@@ -244,6 +222,10 @@ def game(genome, net):
         inputs = vision()
         outputs = net.activate(inputs)
 
+        # print("inputs:")
+        # print(inputs)
+        # print("outputs:")
+        # print(outputs)
         # for event in pygame.event.get():
         #     if event.type == pygame.QUIT:
         #         sys.exit()
@@ -296,7 +278,8 @@ class Enemy:
 
     def shoot(self):
         bullet = Projectile(self.enemy_x_position - playerPos[0], self.enemy_y_position - playerPos[1], self.enemy_x_position, self.enemy_y_position)
-        self.projectileObjects.append(bullet)
+        global projectileObjects
+        projectileObjects.append(bullet)
 
     def shoot_loop(self):
         if self.trigger_count > self.shoot_trigger+random.randint(0, FPS*4):
