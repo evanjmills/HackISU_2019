@@ -17,6 +17,8 @@ fullWindow = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 FPS = 30
 
+gen = 0
+max = 0
 score = 0
 
 playerColor = (255, 255, 255)
@@ -64,6 +66,10 @@ def move(output, genome):
     if output[3] >= 0.5 and playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5:
         playerPos[0] += 5
 
+    if playerPos[0] >= Window_Width - (fullWindowBoarder + playerRadius)+5 or playerPos[1] >= Window_Height - (fullWindowBoarder + playerRadius)+5\
+        or playerPos[0] <= (fullWindowBoarder + playerRadius)-4 or playerPos[1] <= playerRadius + fullWindowBoarder-4:
+        genome.fitness -= 0.2
+
     genome.fitness += 0.1
 
 
@@ -82,7 +88,7 @@ def attack(genome):
             global enemies_on_screen
             enemies_on_screen -= 1
 
-            genome.fitness += 10
+            genome.fitness += 20
         count += 1
 
 
@@ -96,23 +102,52 @@ def spawn_enemy():
     enemies_on_screen += 1
 
 
-def draw_enemies(player_hit_box, genome):
-    for enemy in enemy_list:
-        pygame.draw.circle(fullWindow, enemy_color, (enemy.enemy_x_position, enemy.enemy_y_position), enemyRadius)
-        enemy.shoot_loop()
-        for projectile in enemy.projectileObjects:
-            projectile.move()
-            if player_hit_box.colliderect(projectile.projectile_hit_box):
-                genome.fitness -= 10
-                print("end")
-                global cont
-                cont = False
-                # sys.exit()
-            if(projectile.projectile_x_position < 0 or projectile.projectile_x_position > Window_Width or
-                    projectile.projectile_y_position > Window_Height or projectile.projectile_x_position < 0):
-                enemy.projectileObjects.remove(projectile)
+# def draw_enemies(player_hit_box, genome):
+#     for enemy in enemy_list:
+#         pygame.draw.circle(fullWindow, enemy_color, (enemy.enemy_x_position, enemy.enemy_y_position), enemyRadius)
+#         enemy.shoot_loop()
+#         for projectile in enemy.projectileObjects:
+#             projectile.move()
+#             if player_hit_box.colliderect(projectile.projectile_hit_box):
+#                 genome.fitness -= 10
+#                 print("end")
+#                 global cont
+#                 cont = False
+#                 # sys.exit()
+#             if(projectile.projectile_x_position < 0 or projectile.projectile_x_position > Window_Width or
+#                     projectile.projectile_y_position > Window_Height or projectile.projectile_x_position < 0):
+#                 enemy.projectileObjects.remove(projectile)
+#
+#     return False
 
-    return False
+
+def reset():
+    global score
+    score = 0
+
+    global enemy_dead
+    enemy_dead = False
+    global enemyRadius
+    enemyRadius = 10
+    global number_of_enemies
+    number_of_enemies = 5
+    global enemies_on_screen
+    enemies_on_screen = 0
+    global enemy_look_angle
+    enemy_look_angle = 0
+    global enemy_list
+
+    for enemy in enemy_list:
+        enemy.projectileObjects.clear()
+
+    enemy_list.clear()
+    global enemy_hit_box_list
+    enemy_hit_box_list.clear()
+
+    global player_dead
+    player_dead = False
+    global playerPos
+    playerPos = [Window_Width // 2, Window_Height // 2]
 
 
 def is_collided_with(self, object):
@@ -171,7 +206,7 @@ def game(genome, net):
             score += 1
             text_surface = myfont.render("Score: " + str(score), False, (0, 0, 0))
         keys = pygame.key.get_pressed()
-        clock.tick(FPS)
+        clock.tick()
         while enemies_on_screen < number_of_enemies:
             spawn_enemy()
 
@@ -193,7 +228,6 @@ def game(genome, net):
                 projectile.move()
                 if player_hit_box.colliderect(projectile.projectile_hit_box):
                     genome.fitness -= 10
-                    print("end")
                     stop = True
                     cont = False
                     break
@@ -228,6 +262,14 @@ def game(genome, net):
         counter += 1
 
         # move(keys, event, genome)
+
+    global max
+    global gen
+    if max < score:
+        max = score
+
+    print("Generation: " + str(gen))
+    print("Max Score: " + str(max))
 
 
 
@@ -288,6 +330,9 @@ class Projectile:
 
 
 def eval_genomes(genomes, config):
+    global gen
+    gen += 1
+    print(gen)
     nets = []
     ge = []
 
@@ -298,8 +343,8 @@ def eval_genomes(genomes, config):
         ge.append(genome)
 
     for x, net in enumerate(nets):
+        reset()
         game(ge[x], net)
-        print("next")
 
 
 def run(config_path):
@@ -314,7 +359,7 @@ def run(config_path):
     # p.add_reporter(neat.StatisticsReporter)
     # p.add_reporter(neat.checkpoint(5))
 
-    winner = p.run(eval_genomes, 1)
+    winner = p.run(eval_genomes, 100)
 
 
 if __name__ == '__main__':
