@@ -99,18 +99,20 @@ def game():
 
 
 class Enemy:
-    enemy_x_position = 0
-    enemy_y_position = 0
+    enemy_x_position = Window_Width//2
+    enemy_y_position = Window_Height//2
 
     def __init__(self):
-        global enemy_x_position
-        global enemy_y_position
-        self.enemy_x_position = random.randint((fullWindowBoarder + playerRadius)-4, Window_Width - (fullWindowBoarder + playerRadius))
-        self.enemy_y_position = random.randint(playerRadius + fullWindowBoarder-4, Window_Height - (fullWindowBoarder + playerRadius)+5)
+        while (self.enemy_x_position < Window_Width//2+75 and self.enemy_x_position > Window_Width//2-75) \
+                and (self.enemy_y_position < Window_Height//2+75 and self.enemy_y_position > Window_Height//2-75):
+            self.enemy_x_position = random.randint((fullWindowBoarder + playerRadius)-4,
+                                                   Window_Width - (fullWindowBoarder + playerRadius))
+            self.enemy_y_position = random.randint(playerRadius + fullWindowBoarder-4,
+                                                   Window_Height - (fullWindowBoarder + playerRadius)+5)
         pygame.draw.circle(fullWindow, enemy_color, (self.enemy_x_position, self.enemy_y_position), enemyRadius)
 
     def draw_enemy(self):
-        pygame.draw.circle(fullWindow, enemy_color, (enemy_x_position, enemy_y_position), enemyRadius)
+        pygame.draw.circle(fullWindow, enemy_color, (self.enemy_x_position, self.enemy_y_position), enemyRadius)
         pygame.display.update()
 
     def shoot(self):
