@@ -105,8 +105,8 @@ class Enemy:
     def __init__(self):
         global enemy_x_position
         global enemy_y_position
-        self.enemy_x_position = random.randint(0, Window_Width)
-        self.enemy_y_position = random.randint(0, Window_Height)
+        self.enemy_x_position = random.randint((fullWindowBoarder + playerRadius)-4, Window_Width - (fullWindowBoarder + playerRadius))
+        self.enemy_y_position = random.randint(playerRadius + fullWindowBoarder-4, Window_Height - (fullWindowBoarder + playerRadius)+5)
         pygame.draw.circle(fullWindow, enemy_color, (self.enemy_x_position, self.enemy_y_position), enemyRadius)
 
     def draw_enemy(self):
