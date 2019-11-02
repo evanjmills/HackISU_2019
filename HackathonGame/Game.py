@@ -4,6 +4,10 @@ import random
 import math
 import neat
 import os
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
 
 pygame.init()
 pygame.font.init()
@@ -45,19 +49,19 @@ fullWindowBoarder = 10
 
 root_two = math.sqrt(2)
 slopes = [(1, 0), (root_two / 2, root_two / 2), (0, 1), (-1 * root_two, root_two), (-1, 0), (-1 * root_two, -1 *
-                                                                        root_two), (0, -1), (root_two, -1 * root_two)]
+                                                                                             root_two), (0, -1), (root_two, -1 * root_two)]
 
 
 # def move(keys, event):
-    # if event.type == pygame.KEYDOWN or sum(keys) > 0:
-    #     if keys[pygame.K_UP] and playerPos[1] > playerRadius + fullWindowBoarder-4:
-    #         playerPos[1] -= 5
-    #     if keys[pygame.K_LEFT] and playerPos[0] > (fullWindowBoarder + playerRadius)-4:
-    #         playerPos[0] -= 5
-    #     if keys[pygame.K_DOWN] and playerPos[1] < Window_Height - (fullWindowBoarder + playerRadius)+5:
-    #         playerPos[1] += 5
-    #     if keys[pygame.K_RIGHT] and playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5:
-    #         playerPos[0] += 5
+# if event.type == pygame.KEYDOWN or sum(keys) > 0:
+#     if keys[pygame.K_UP] and playerPos[1] > playerRadius + fullWindowBoarder-4:
+#         playerPos[1] -= 5
+#     if keys[pygame.K_LEFT] and playerPos[0] > (fullWindowBoarder + playerRadius)-4:
+#         playerPos[0] -= 5
+#     if keys[pygame.K_DOWN] and playerPos[1] < Window_Height - (fullWindowBoarder + playerRadius)+5:
+#         playerPos[1] += 5
+#     if keys[pygame.K_RIGHT] and playerPos[0] < Window_Width - (fullWindowBoarder + playerRadius)+5:
+#         playerPos[0] += 5
 def move(output, genome):
     if output[0] >= .5 and playerPos[1] > playerRadius + fullWindowBoarder-4:
         playerPos[1] -= 5
@@ -76,7 +80,8 @@ def move(output, genome):
 
 
 def attack(genome):
-    attack_box = pygame.draw.circle(fullWindow, GREEN, (playerPos[0], playerPos[1]), playerRadius+10)
+    attack_box = pygame.draw.circle(
+        fullWindow, GREEN, (playerPos[0], playerPos[1]), playerRadius+10)
     pygame.display.update()
     count = 0
     for rect in enemy_hit_box_list:
@@ -84,7 +89,8 @@ def attack(genome):
             global score
             score += 10
             global text_surface
-            text_surface = myfont.render("Score: "+str(score), False, (0, 0, 0))
+            text_surface = myfont.render(
+                "Score: "+str(score), False, (0, 0, 0))
             enemy_hit_box_list.remove(rect)
             enemy_list.pop(count)
             global enemies_on_screen
@@ -98,7 +104,8 @@ def spawn_enemy():
     gunner = Enemy()
     gunner.create()
     enemy_list.append(gunner)
-    hit_box = pygame.Rect(gunner.enemy_x_position - enemyRadius, gunner.enemy_y_position - enemyRadius,enemyRadius*2, enemyRadius*2)
+    hit_box = pygame.Rect(gunner.enemy_x_position - enemyRadius,
+                          gunner.enemy_y_position - enemyRadius, enemyRadius*2, enemyRadius*2)
     enemy_hit_box_list.append(hit_box)
     global enemies_on_screen
     enemies_on_screen += 1
@@ -192,7 +199,8 @@ def game(genome, net):
             global score
             global text_surface
             score += 1
-            text_surface = myfont.render("Score: " + str(score), False, (0, 0, 0))
+            text_surface = myfont.render(
+                "Score: " + str(score), False, (0, 0, 0))
         keys = pygame.key.get_pressed()
         clock.tick(300)
         while enemies_on_screen < number_of_enemies:
@@ -200,9 +208,11 @@ def game(genome, net):
 
         pygame.Surface.fill(fullWindow, GREY)
         # boarder
-        pygame.draw.rect(fullWindow, (255, 255, 255), (0, 0, Window_Width, Window_Height), fullWindowBoarder)
+        pygame.draw.rect(fullWindow, (255, 255, 255),
+                         (0, 0, Window_Width, Window_Height), fullWindowBoarder)
         # player
-        player_hit_box = pygame.draw.circle(fullWindow, playerColor, (playerPos[0], playerPos[1]), playerRadius)
+        player_hit_box = pygame.draw.circle(
+            fullWindow, playerColor, (playerPos[0], playerPos[1]), playerRadius)
         # score
         fullWindow.blit(text_surface, (fullWindowBoarder, fullWindowBoarder))
         # update moving stuffs
@@ -261,7 +271,6 @@ def game(genome, net):
     print("Max Score: " + str(max))
 
 
-
 class Enemy:
     shoot_trigger = int(FPS)
     trigger_count = 0
@@ -276,11 +285,13 @@ class Enemy:
                                                    Window_Width - (fullWindowBoarder + playerRadius))
             self.enemy_y_position = random.randint(playerRadius + fullWindowBoarder-4,
                                                    Window_Height - (fullWindowBoarder + playerRadius)+5)
-        pygame.draw.circle(fullWindow, enemy_color, (self.enemy_x_position, self.enemy_y_position), enemyRadius)
+        pygame.draw.circle(fullWindow, enemy_color,
+                           (self.enemy_x_position, self.enemy_y_position), enemyRadius)
         self.shoot_loop()
 
     def draw_enemy(self):
-        pygame.draw.circle(fullWindow, enemy_color, (self.enemy_x_position, self.enemy_y_position), enemyRadius)
+        pygame.draw.circle(fullWindow, enemy_color,
+                           (self.enemy_x_position, self.enemy_y_position), enemyRadius)
         pygame.display.update()
 
     def shoot(self):
@@ -315,7 +326,8 @@ class Projectile:
     def move(self):
         self.projectile_x_position += self.x_change
         self.projectile_y_position += self.y_change
-        self.projectile_hit_box = pygame.draw.circle(fullWindow, (255, 255, 255), (math.floor(self.projectile_x_position), math.floor(self.projectile_y_position)), self.bullet_size)
+        self.projectile_hit_box = pygame.draw.circle(fullWindow, (255, 255, 255), (math.floor(
+            self.projectile_x_position), math.floor(self.projectile_y_position)), self.bullet_size)
         pygame.display.update()
 
 
@@ -339,7 +351,8 @@ def eval_genomes(genomes, config):
 
 def run(config_path):
     # load config file
-    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
+    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                         neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
 
     # create the population
     p = neat.Population(config)
@@ -352,7 +365,118 @@ def run(config_path):
     winner = p.run(eval_genomes, 100)
 
 
-if __name__ == '__main__':
+def the_big_one():
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, 'config.txt')
     run(config_path)
+
+
+@app.route('/', methods=['POST'])
+def only_endpoint():
+    body = request.json
+    print(body)
+
+    conn_add_prob = body['conn_add_prob']
+    conn_del_prob = body['conn_del_prob']
+    node_add_prob = body['node_add_prob']
+    node_del_prob = body['node_del_prob']
+    num_hidden = body['num_hidden']
+    weight_mutate_rate = body['weight_mutate_rate']
+    weight_replace_rate = body['weight_replace_rate']
+    survival = body['survival']
+
+    config_file_text = """[NEAT]
+fitness_criterion     = max
+fitness_threshold     = 100
+pop_size              = 300
+reset_on_extinction   = False
+
+[DefaultGenome]
+# node activation options
+activation_default      = tanh
+activation_mutate_rate  = 0.0
+activation_options      = tanh
+
+# node aggregation options
+aggregation_default     = sum
+aggregation_mutate_rate = 0.0
+aggregation_options     = sum
+
+# node bias options
+bias_init_mean          = 0.0
+bias_init_stdev         = 1.0
+bias_max_value          = 30.0
+bias_min_value          = -30.0
+bias_mutate_power       = 0.5
+bias_mutate_rate        = 0.7
+bias_replace_rate       = 0.1
+
+# genome compatibility options
+compatibility_disjoint_coefficient = 1.0
+compatibility_weight_coefficient   = 0.5
+
+# connection add/remove rates
+conn_add_prob           = {conn_add_prob}
+conn_delete_prob        = {conn_del_prob}
+
+# connection enable options
+enabled_default         = True
+enabled_mutate_rate     = 0.01
+
+feed_forward            = True
+initial_connection      = full
+
+# node add/remove rates
+node_add_prob           = {node_add_prob}
+node_delete_prob        = {node_del_prob}
+
+# network parameters
+num_hidden              = {num_hidden}
+num_inputs              = 16
+num_outputs             = 5
+
+# node response options
+response_init_mean      = 1.0
+response_init_stdev     = 0.0
+response_max_value      = 30.0
+response_min_value      = -30.0
+response_mutate_power   = 0.0
+response_mutate_rate    = 0.0
+response_replace_rate   = 0.0
+
+# connection weight options
+weight_init_mean        = 0.0
+weight_init_stdev       = 1.0
+weight_max_value        = 30
+weight_min_value        = -30
+weight_mutate_power     = 0.5
+weight_mutate_rate      = {weight_mutate_rate}
+weight_replace_rate     = {weight_replace_rate}
+
+[DefaultSpeciesSet]
+compatibility_threshold = 3.0
+
+[DefaultStagnation]
+species_fitness_func = max
+max_stagnation       = 20
+species_elitism      = 2
+
+[DefaultReproduction]
+elitism            = 2
+survival_threshold = {survival}
+""".format(conn_add_prob=conn_add_prob, conn_del_prob=conn_del_prob, node_add_prob=node_add_prob,
+           node_del_prob=node_del_prob, num_hidden=num_hidden, weight_mutate_rate=weight_mutate_rate,
+           weight_replace_rate=weight_replace_rate, survival=survival)
+
+    local_dir = os.path.dirname(__file__)
+    file = os.path.join(local_dir, 'config.txt')
+    with open(file, 'w') as filetowrite:
+        filetowrite.write(config_file_text)
+
+    the_big_one()
+
+    return 'success'
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
