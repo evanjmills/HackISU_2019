@@ -26,8 +26,10 @@ body {
     'video form lead';
 }
 .header {
+  height: 100%;
+  grid-area: header;
   font-size: 3rem;
-  padding: 0 4rem;
+  padding: 2rem 4rem;
 
   span {
     color: #cc9901;
@@ -107,7 +109,7 @@ body {
     div {
       display: flex;
       flex-direction: column;
-      padding: 0.3rem;
+      padding: 0.5rem;
       label {
         font-size: 1rem;
       }
@@ -120,6 +122,18 @@ body {
         padding: 0.25rem;
       }
     }
+  }
+}
+
+.user-options-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row !important;
+  justify-content: space-between;
+
+  div {
+    width: 45%;
+    max-width: 45%;
   }
 }
 
