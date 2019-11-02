@@ -183,7 +183,27 @@ def game(genome, net):
         # score
         fullWindow.blit(text_surface, (fullWindowBoarder, fullWindowBoarder))
         # update moving stuffs
-        draw_enemies(player_hit_box, genome)
+        # draw_enemies(player_hit_box, genome)
+
+        for enemy in enemy_list:
+            stop = False
+            pygame.draw.circle(fullWindow, enemy_color, (enemy.enemy_x_position, enemy.enemy_y_position), enemyRadius)
+            enemy.shoot_loop()
+            for projectile in enemy.projectileObjects:
+                projectile.move()
+                if player_hit_box.colliderect(projectile.projectile_hit_box):
+                    genome.fitness -= 10
+                    print("end")
+                    stop = True
+                    cont = False
+                    break
+                    # sys.exit()
+                if (projectile.projectile_x_position < 0 or projectile.projectile_x_position > Window_Width or
+                        projectile.projectile_y_position > Window_Height or projectile.projectile_x_position < 0):
+                    enemy.projectileObjects.remove(projectile)
+            if stop:
+                break
+
         # update frame
         pygame.display.update()
 
@@ -279,6 +299,7 @@ def eval_genomes(genomes, config):
 
     for x, net in enumerate(nets):
         game(ge[x], net)
+        print("next")
 
 
 def run(config_path):
@@ -293,7 +314,7 @@ def run(config_path):
     # p.add_reporter(neat.StatisticsReporter)
     # p.add_reporter(neat.checkpoint(5))
 
-    winner = p.run(eval_genomes, 100)
+    winner = p.run(eval_genomes, 1)
 
 
 if __name__ == '__main__':
