@@ -6,25 +6,27 @@ export const Leaderboard = () => (
       <h2>Leaderboard</h2>
       <table cellSpacing='0'>
         <thead>
-          <td>Rank</td>
-          <td>Name</td>
-          <td>Score</td>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Score</th>
         </thead>
-        <tr>
-          <td>1</td>
-          <td>name1</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <td>2</td>
-          <td>name2</td>
-          <td>2</td>
-        </tr>
-        <tr>
-          <td>3</td>
-          <td>name3</td>
-          <td>3</td>
-        </tr>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>name1</td>
+            <td>1</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>name2</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>name3</td>
+            <td>3</td>
+          </tr>
+        </tbody>
       </table>
     </div>
   </div>

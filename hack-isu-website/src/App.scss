@@ -106,10 +106,12 @@ body {
   }
 
   form {
+    text-align: center;
     div {
+      text-align: left;
       display: flex;
       flex-direction: column;
-      padding: 0.5rem;
+      padding-bottom: 0.5rem;
       label {
         font-size: 1rem;
       }
@@ -120,6 +122,21 @@ body {
         border-radius: 5px;
         font-size: 1rem;
         padding: 0.25rem;
+      }
+    }
+    input[type='submit'] {
+      padding: 1rem;
+      border-radius: 30px;
+      border: none;
+      background-color: #111111;
+      color: #fdbe00;
+      font-weight: bold;
+      font-size: 1.3rem;
+      box-shadow: 4px 4px 3px -3px #333;
+
+      &:focus {
+        box-shadow: none;
+        transform: translate(2px, 2px);
       }
     }
   }

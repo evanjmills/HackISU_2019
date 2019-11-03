@@ -5,13 +5,29 @@ import math
 import neat
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
+import pyrebase
 
 app = Flask(__name__)
+cors = CORS(app)
 
+local_dir = os.path.dirname(__file__)
+service_path = os.path.join(
+    local_dir, 'neat-p-firebase-adminsdk-2n7vx-da2b59a349.json')
+
+config = {
+    "apiKey": " AIzaSyBI4jY-YxsYnzYQdGwbgJbavmxTf_dEtDk ",
+    "authDomain": "neat-p.firebaseapp.com",
+    "databaseURL": "https://neat-p.firebaseio.com",
+    "storageBucket": "neat-p.appspot.com",
+    "serviceAccount": service_path
+}
+firebase = pyrebase.initialize_app(config)
+db = firebase.database()
 
 pygame.init()
 pygame.font.init()
-pygame.display.set_caption("yeet")
+pygame.display.set_caption("NEAT")
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 text_surface = myfont.render('Score: 0', False, (0, 0, 0))
 
@@ -170,9 +186,11 @@ def vision():
         nodes[2*x + 1] = enemy.enemy_y_position - playerPos[1]
 
     for projectile in projectileObjects:
-        tuples.append((projectile.projectile_x_position, projectile.projectile_y_position))
+        tuples.append((projectile.projectile_x_position,
+                       projectile.projectile_y_position))
 
-    tuples.sort(key=lambda temp: math.floor(math.sqrt(temp[0] ** 2 + temp[1] ** 2)))
+    tuples.sort(key=lambda temp: math.floor(
+        math.sqrt(temp[0] ** 2 + temp[1] ** 2)))
 
     for x, temp2 in enumerate(tuples):
         try:
@@ -181,7 +199,7 @@ def vision():
                 nodes[x * 2 + 11] = temp2[1]
             else:
                 break
-        except :
+        except:
             print(x)
             print(temp2)
             print(tuples)
@@ -219,7 +237,8 @@ def game(genome, net):
         # draw_enemies(player_hit_box, genome)
 
         for enemy in enemy_list:
-            pygame.draw.circle(fullWindow, enemy_color, (enemy.enemy_x_position, enemy.enemy_y_position), enemyRadius)
+            pygame.draw.circle(
+                fullWindow, enemy_color, (enemy.enemy_x_position, enemy.enemy_y_position), enemyRadius)
             enemy.shoot_loop()
 
         for projectile in projectileObjects:
@@ -295,7 +314,8 @@ class Enemy:
         pygame.display.update()
 
     def shoot(self):
-        bullet = Projectile(self.enemy_x_position - playerPos[0], self.enemy_y_position - playerPos[1], self.enemy_x_position, self.enemy_y_position)
+        bullet = Projectile(
+            self.enemy_x_position - playerPos[0], self.enemy_y_position - playerPos[1], self.enemy_x_position, self.enemy_y_position)
         global projectileObjects
         projectileObjects.append(bullet)
 
@@ -362,7 +382,7 @@ def run(config_path):
     # p.add_reporter(neat.StatisticsReporter)
     # p.add_reporter(neat.checkpoint(5))
 
-    winner = p.run(eval_genomes, 100)
+    winner = p.run(eval_genomes, 30)
 
 
 def the_big_one():
@@ -374,8 +394,8 @@ def the_big_one():
 @app.route('/', methods=['POST'])
 def only_endpoint():
     body = request.json
-    print(body)
 
+    name = body['name']
     conn_add_prob = body['conn_add_prob']
     conn_del_prob = body['conn_del_prob']
     node_add_prob = body['node_add_prob']
@@ -388,7 +408,8 @@ def only_endpoint():
     config_file_text = """[NEAT]
 fitness_criterion     = max
 fitness_threshold     = 100
-pop_size              = 300
+no_fitness_termination = true
+pop_size              = 2
 reset_on_extinction   = False
 
 [DefaultGenome]
@@ -432,7 +453,7 @@ node_delete_prob        = {node_del_prob}
 
 # network parameters
 num_hidden              = {num_hidden}
-num_inputs              = 16
+num_inputs              = 20
 num_outputs             = 5
 
 # node response options
@@ -475,7 +496,10 @@ survival_threshold = {survival}
 
     the_big_one()
 
-    return 'success'
+    data = {"name": name, "score": max}
+    db.child("leaders").push(data)
+
+    return data
 
 
 if __name__ == "__main__":
