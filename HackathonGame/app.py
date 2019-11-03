@@ -6,6 +6,7 @@ import neat
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from twilio.rest import Client
 import pyrebase
 
 app = Flask(__name__)
@@ -394,7 +395,7 @@ def the_big_one():
 @app.route('/', methods=['POST'])
 def only_endpoint():
     body = request.json
-
+    phone = body['phone']
     name = body['name']
     conn_add_prob = body['conn_add_prob']
     conn_del_prob = body['conn_del_prob']
@@ -498,6 +499,19 @@ survival_threshold = {survival}
 
     data = {"name": name, "score": max}
     db.child("leaders").push(data)
+
+    account_sid = 'ACcf4a293f6967bd74d6017b118e6762e5'
+    auth_token = '913efe1e33a4c5eb6b1133af2d961564'
+    client = Client(account_sid, auth_token)
+
+    message = client.messages \
+        .create(
+        body="Your model is done! :D",
+        from_='+12055189478',
+        to=phone
+    )
+
+    print(message.sid)
 
     return data
 
