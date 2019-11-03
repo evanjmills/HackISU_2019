@@ -4,7 +4,6 @@ import random
 import math
 import neat
 import os
-import numpy as np
 
 pygame.init()
 pygame.font.init()
@@ -82,6 +81,7 @@ def move(output, genome):
         playerPos[0] += 5
         add += 1
 
+    genome.fitness += 0.00000001
 
 def attack(genome):
     attack_box = pygame.draw.circle(fullWindow, GREEN, (playerPos[0], playerPos[1]), playerRadius+10)
@@ -151,12 +151,7 @@ def reset():
     enemy_hit_box_list.clear()
     global projectileObjects
     projectileObjects.clear()
-    global count
-    count = 0
-    global total
-    total = 0
-    global average
-    average = 0
+
 
     global player_dead
     player_dead = False
@@ -220,7 +215,7 @@ def game(genome, net):
             score += 1
             text_surface = myfont.render("Score: " + str(score), False, (0, 0, 0))
         keys = pygame.key.get_pressed()
-        clock.tick()
+        clock.tick(500)
         while enemies_on_screen < number_of_enemies:
             spawn_enemy()
 
@@ -293,11 +288,11 @@ def game(genome, net):
     total += score
     average = total / count
 
-    print("Generation: " + str(gen))
-    print("Max Fitness: " + str(max_fitness))
-    print("Cur Score: " + str(score))
-    print("Gen Max Score: " + str(cur_gen_best))
-    print("Max Score: " + str(max))
+    print('Generation: ' + str(gen) + "\t", end='')
+    print("Max Fitness: " + str(max_fitness)+"\t", end='')
+    print("Cur Score: " + str(score) + "\t", end='')
+    print("Gen Max Score: " + str(cur_gen_best) + "\t", end='')
+    print("Max Score: " + str(max) + "\t", end='')
     print("Average Score: " + str(average))
 
 
@@ -376,6 +371,13 @@ def eval_genomes(genomes, config):
         reset()
         game(ge[x], net)
 
+    global count
+    count = 0
+    global total
+    total = 0
+    global average
+    average = 0
+
 
 def run(config_path):
     # load config file
@@ -389,7 +391,7 @@ def run(config_path):
     # p.add_reporter(neat.StatisticsReporter)
     # p.add_reporter(neat.checkpoint(5))
 
-    winner = p.run(eval_genomes, 50)
+    winner = p.run(eval_genomes, 30)
 
     # saveNN()
 
