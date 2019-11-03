@@ -19,12 +19,17 @@ fullWindow = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 FPS = 30
 
+count = 0
+total = 0
+average = 0
 gen = 0
 max = 0
 cur_gen_best = 0
 cur_gen_fitness = 0
 max_fitness = 0
 score = 0
+
+best_gens = None
 
 playerColor = (255, 255, 255)
 enemy_color = (127, 0, 255)
@@ -77,29 +82,6 @@ def move(output, genome):
         playerPos[0] += 5
         add += 1
 
-        if add >= 3:
-            genome.fitness -= 1000
-
-    neg = 0
-    if playerPos[0] >= Window_Width - (fullWindowBoarder + playerRadius)+5:
-        genome.fitness -= 20
-        neg -= 20
-    if playerPos[1] >= Window_Height - (fullWindowBoarder + playerRadius)+5:
-        genome.fitness -= 20
-        neg -= 20
-    if playerPos[0] <= (fullWindowBoarder + playerRadius)-4:
-        genome.fitness -= 20
-        neg -= 20
-    if playerPos[1] <= playerRadius + fullWindowBoarder-4:
-        genome.fitness -= 20
-        neg -= 20
-
-    if neg <= -40:
-        genome.fitness -= 40
-
-
-    genome.fitness += 0.000001
-
 
 def attack(genome):
     attack_box = pygame.draw.circle(fullWindow, GREEN, (playerPos[0], playerPos[1]), playerRadius+10)
@@ -116,7 +98,7 @@ def attack(genome):
             global enemies_on_screen
             enemies_on_screen -= 1
 
-            genome.fitness += 100
+            genome.fitness += 1
         count += 1
 
 
@@ -169,6 +151,12 @@ def reset():
     enemy_hit_box_list.clear()
     global projectileObjects
     projectileObjects.clear()
+    global count
+    count = 0
+    global total
+    total = 0
+    global average
+    average = 0
 
     global player_dead
     player_dead = False
@@ -213,6 +201,13 @@ def vision():
 
     return nodes
 
+def saveNN():
+    model_json = best_gens.to_json()
+    with open("model.json", "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    best_gens.save_weights("model.h5")
+    print("Saved model to disk")
 
 def game(genome, net):
     counter = 0
@@ -225,7 +220,7 @@ def game(genome, net):
             score += 1
             text_surface = myfont.render("Score: " + str(score), False, (0, 0, 0))
         keys = pygame.key.get_pressed()
-        clock.tick(400)
+        clock.tick()
         while enemies_on_screen < number_of_enemies:
             spawn_enemy()
 
@@ -246,8 +241,8 @@ def game(genome, net):
         for projectile in projectileObjects:
             projectile.move()
             if player_hit_box.colliderect(projectile.projectile_hit_box):
-                genome.fitness -= 30
                 cont = False
+                genome.fitness -= 1
                 break
                 # sys.exit()
             if (projectile.projectile_x_position < 0 or projectile.projectile_x_position > Window_Width or
@@ -283,8 +278,7 @@ def game(genome, net):
 
         # move(keys, event, genome)
 
-    genome.fitness += score * 20
-    global max, max_fitness, cur_gen_best, cur_gen_fitness, gen
+    global max, max_fitness, cur_gen_best, cur_gen_fitness, gen, total, count, average, best_gens
     if cur_gen_fitness < genome.fitness:
         cur_gen_fitness = genome.fitness
     if max_fitness < genome.fitness:
@@ -293,12 +287,18 @@ def game(genome, net):
         cur_gen_best = score
     if max < score:
         max = score
+        best_gens = genome
+
+    count += 1
+    total += score
+    average = total / count
 
     print("Generation: " + str(gen))
     print("Max Fitness: " + str(max_fitness))
     print("Cur Score: " + str(score))
     print("Gen Max Score: " + str(cur_gen_best))
     print("Max Score: " + str(max))
+    print("Average Score: " + str(average))
 
 
 
@@ -389,7 +389,9 @@ def run(config_path):
     # p.add_reporter(neat.StatisticsReporter)
     # p.add_reporter(neat.checkpoint(5))
 
-    winner = p.run(eval_genomes, 100)
+    winner = p.run(eval_genomes, 50)
+
+    # saveNN()
 
 
 if __name__ == '__main__':
